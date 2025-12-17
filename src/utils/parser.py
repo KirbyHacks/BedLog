@@ -38,24 +38,40 @@ def changelogs(html, limit: int = 10):
 def article_md(html, url, latest=False):
     soup = BeautifulSoup(html, "html.parser")
 
-    title = soup.select_one("h1.article-title").get_text(strip=True)
+    title_tag = soup.select_one("h1.article-title")
+    title = title_tag.get_text(strip=True) if title_tag else "Minecraft Bedrock Update"
 
     body = soup.select_one("div.article-body")
+    paragraphs = body.find_all("p") if body else []
 
-    paragraphs = body.find_all("p")
-    description = paragraphs[1].get_text(strip=True) if len(paragraphs) > 1 else ""
+    description = ""
+    if len(paragraphs) >= 2:
+        description = paragraphs[1].get_text(" ", strip=True)
 
-    fixes = body.find_all("li")
+    content_lines = []
 
-    md = []
-    suffix = " [Latest]" if latest else ""
-    md.append(f"__**{title}{suffix}**__")
-    md.append(f"> {description}\n")
-    md.append("**Fixes:**")
+    for section in body.find_all(["h1", "h2", "h3", "li"]):
+        if section.name in ["h1", "h2", "h3"]:
+            text = section.get_text(strip=True)
+            content_lines.append(f"\n**{text}**")
 
-    for i, fix in enumerate(fixes, 1):
-        md.append(f"{i}. {fix.get_text(' ', strip=True)}")
+        elif section.name == "li":
+            for a in section.find_all("a"):
+                link_text = a.get_text(strip=True)
+                link_url = a.get("href")
+                a.replace_with(f"[{link_text}]({link_url})")
 
-    md.append(f"\n**Update:** {url}")
+            text = section.get_text(" ", strip=True)
+            content_lines.append(f"- {text}")
 
-    return "\n".join(md)
+    content = "\n".join(content_lines)
+
+    footer = f"Update link: {url}"
+
+    return {
+        "title": f"__**{title} [Latest]**__",
+        "description": f"> {description}",
+        "content": content.strip(),
+        "footer": footer,
+        "attachments": []
+    }
