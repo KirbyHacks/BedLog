@@ -1,2 +1,4 @@
 # BedLog
-# BedLog
+---
+
+Initial Structure
