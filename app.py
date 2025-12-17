@@ -1,19 +1,30 @@
-from fastapi import FastAPI
-import cloudscraper
-from src.main import get_recent, get_latest_md
-
-app = FastAPI(
-    title="BedLog",
-    version="0.1.0"
+from fastapi import FastAPI, HTTPException
+from src.main import (
+    get_latest_md,
+    get_version_md,
+    update_cache
 )
+
+app = FastAPI(title="BedLog", version="0.2.0")
+
 
 @app.get("/latest")
 def latest():
-    return {"result": get_latest_md()}
+    return get_latest_md()
 
-@app.get("/history")
-def history():
-    return get_recent()
+
+@app.get("/version")
+def version(version: str):
+    result = get_version_md(version)
+    if not result:
+        raise HTTPException(404, "Version not found")
+    return result["md"]
+
+
+@app.post("/update")
+def update():
+    return update_cache()
+
 
 @app.get("/health")
 def health():

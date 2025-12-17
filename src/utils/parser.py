@@ -1,21 +1,14 @@
 from bs4 import BeautifulSoup
 import re
 
-pattern = re.compile(
-    r"(Bedrock\)|Bedrock Edition)",
-    re.IGNORECASE
-)
-
-v_pattern = re.compile(
-    r"\b\d+\.\d+\.\d+(?:/\d+)?\b"
-)
+BEDROCK_PATTERN = re.compile(r"(Bedrock\)|Bedrock Edition)", re.I)
+VERSION_PATTERN = re.compile(r"\b\d+\.\d+\.\d+(?:/\d+)?\b")
 
 base = "https://feedback.minecraft.net"
 
 
 def changelogs(html, limit: int = 10):
     soup = BeautifulSoup(html, "html.parser")
-
     results = []
 
     for li in soup.select("ul.article-list li.article-list-item"):
@@ -24,18 +17,16 @@ def changelogs(html, limit: int = 10):
             continue
 
         title = a.get_text(strip=True)
-        href = a.get("href")
-
-        if not pattern.search(title):
+        if not BEDROCK_PATTERN.search(title):
             continue
 
-        version_match = v_pattern.search(title)
+        version_match = VERSION_PATTERN.search(title)
         version = version_match.group(0) if version_match else None
 
         results.append({
             "title": title,
-            "url": base + href,
-            "version": version
+            "version": version,
+            "url": base + a["href"]
         })
 
         if len(results) >= limit:
@@ -43,27 +34,28 @@ def changelogs(html, limit: int = 10):
 
     return results
 
-def article_md(html, url):
+
+def article_md(html, url, latest=False):
     soup = BeautifulSoup(html, "html.parser")
 
-    title_tag = soup.select_one("h1.article-title")
-    title = title_tag.get_text(strip=True) if title_tag else "Minecraft Bedrock Update"
+    title = soup.select_one("h1.article-title").get_text(strip=True)
 
     body = soup.select_one("div.article-body")
-    paragraphs = body.find_all("p") if body else []
+
+    paragraphs = body.find_all("p")
     description = paragraphs[1].get_text(strip=True) if len(paragraphs) > 1 else ""
 
-    fixes = body.find_all("li") if body else []
+    fixes = body.find_all("li")
 
     md = []
-    md.append(f"__**{title} [Latest]**__")
+    suffix = " [Latest]" if latest else ""
+    md.append(f"__**{title}{suffix}**__")
     md.append(f"> {description}\n")
     md.append("**Fixes:**")
 
-    for i, fix in enumerate(fixes, start=1):
-        text = fix.get_text(" ", strip=True)
-        md.append(f"{i}. {text}")
+    for i, fix in enumerate(fixes, 1):
+        md.append(f"{i}. {fix.get_text(' ', strip=True)}")
 
-    md.append(f"\n**Update:** Link: {url}")
+    md.append(f"\n**Update:** {url}")
 
     return "\n".join(md)
