@@ -1,12 +1,11 @@
 import cloudscraper
 from src.utils.parser import changelogs, article_md
 from src.cache import load_cache, save_cache
+from src.utils.state import load_state, save_state
 
 INDEX_URL = "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs"
 
 scraper = cloudscraper.create_scraper()
-
-
 
 def update_cache(pages: int = 9):
     cache = load_cache()
@@ -42,3 +41,27 @@ def get_latest_md():
 def get_version_md(version: str):
     cache = load_cache()
     return cache.get(version)
+
+def check_update():
+    cf = cloudscraper.create_scraper()
+    html = cf.get(INDEX_URL).text
+
+    latest = changelogs(html, limit=1)[0]
+    current_version = latest["version"]
+
+    state = load_state()
+    previous_version = state["latest_version"]
+
+    if previous_version != current_version:
+        save_state(current_version)
+        return {
+            "updated": True,
+            "latest_version": current_version,
+            "previous_version": previous_version
+        }
+
+    return {
+        "updated": False,
+        "latest_version": current_version,
+        "previous_version": previous_version
+    }
