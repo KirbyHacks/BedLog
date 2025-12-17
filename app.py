@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import cloudscraper
-from src.main import get_recent
+from src.main import get_recent, get_latest_md
 
 app = FastAPI(
     title="BedLog",
@@ -9,7 +9,7 @@ app = FastAPI(
 
 @app.get("/latest")
 def latest():
-    return "Sigma"
+    return {"result": get_latest_md()}
 
 @app.get("/history")
 def history():
