@@ -5,6 +5,7 @@ from src.main import (
     update_cache,
     check_update
 )
+import uvicorn
 
 app = FastAPI(title="BedLog", version="0.2.0")
 
@@ -34,3 +35,12 @@ def health():
 @app.get("/check")
 def check():
     return check_update()
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app:app",
+        host="0.0.0.0",
+        port=27000,
+        reload=False
+    )
