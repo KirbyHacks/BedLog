@@ -21,7 +21,7 @@ def version(version: str):
     return result["md"]
 
 
-@app.post("/update")
+@app.get("/update")
 def update():
     return update_cache()
 

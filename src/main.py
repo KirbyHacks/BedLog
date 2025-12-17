@@ -7,6 +7,7 @@ INDEX_URL = "https://feedback.minecraft.net/hc/en-us/sections/360001186971-Relea
 scraper = cloudscraper.create_scraper()
 
 
+
 def update_cache(pages: int = 9):
     cache = load_cache()
 
